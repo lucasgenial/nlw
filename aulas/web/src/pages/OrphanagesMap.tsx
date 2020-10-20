@@ -1,66 +1,81 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FiPlus, FiArrowRight } from 'react-icons/fi';
 import { Map, TileLayer, Marker, Popup } from 'react-leaflet';
-import LeaFlet from 'leaflet';
-
-import 'leaflet/dist/leaflet.css';
-
-import mapMarkerImg from '../images/map-marker.svg';
 
 import '../styles/pages/orphanages-map.css';
 
-const mapIcon = LeaFlet.icon({
-   iconUrl: mapMarkerImg,
-   iconSize: [58, 68],
-   iconAnchor: [29, 68],
-   popupAnchor: [170, 2],
-})
+import mapMarkerImg from '../images/map-marker.svg';
+import mapIcon from '../utils/mapUtils';
+import api from '../services/api';
+
+
+
+interface Orphanage{
+   id: number;
+   latitude: number;
+   longitude: number;
+   name: string;
+}
 
 function OrphanagesMap(){
-      return (
-         <div id="page-map">
-            <aside>
-               <header>
-                  <img src={mapMarkerImg} alt="Happy"/>
 
-                  <h2>Escolha um orfanato no map</h2>
+   const [orphanages, setOrphanages] = useState<Orphanage[]>([]);
 
-                  <p>Muitas crianças estão esperando a sua visita :)</p>
-               </header>
+   useEffect(() => {
+      api.get('/orphanages').then(response =>{
+         setOrphanages(response.data);
+      });
+   }, []);
 
-               <footer>
-                  <strong>Porto Seguro</strong>
-                  <span>Bahia</span>
-               </footer>
-            </aside>
+   return (
+      <div id="page-map">
+         <aside>
+            <header>
+               <img src={mapMarkerImg} alt="Happy"/>
 
-            <Map
-               center={[-16.4354361,-39.0816787]}
-               zoom={15}
-               style={{ width: '100%', height: '100%'}}
-            >
-               <TileLayer
-                  url={`https://api.mapbox.com/styles/v1/mapbox/dark-v10/tiles/256/{z}/{x}/{y}@2x?access_token=${process.env.REACT_APP_KEY_MAPBOX}`}
-               />
-               <Marker icon={mapIcon} position={[-16.4354361,-39.0816787]} >
-                  <Popup closeButton={false} minWidth={240} maxWidth={240} className="map-popup" >
-                     Lar das Meninas
-                     <Link to="/orphanages/1">
-                        <FiArrowRight size={20} color="#FFF" />
-                     </Link>
-                  </Popup>
-               </Marker>
+               <h2>Escolha um orfanato no map</h2>
 
-               {/* <TileLayer
-                  url="https://a.tile.openstreetmap.org/{z}/{x}/{y}.png"
-               /> */}
-            </Map>
+               <p>Muitas crianças estão esperando a sua visita :)</p>
+            </header>
 
-            <Link to="/orphanages/create" className="create-orphanage">
-                <FiPlus size={32} color="#FFF" />
-            </Link>
-         </div>
+            <footer>
+               <strong>Porto Seguro</strong>
+               <span>Bahia</span>
+            </footer>
+         </aside>
+
+         <Map
+            center={[-16.4354361,-39.0816787]}
+            zoom={15}
+            style={{ width: '100%', height: '100%'}}
+         >
+            <TileLayer
+               url={`https://api.mapbox.com/styles/v1/mapbox/dark-v10/tiles/256/{z}/{x}/{y}@2x?access_token=${process.env.REACT_APP_KEY_MAPBOX}`}
+            />
+
+            {orphanages.map(orphanage =>{
+               return (
+                  <Marker
+                     icon={mapIcon}
+                     position={[orphanage.latitude,orphanage.longitude]}
+                     key={orphanage.id}
+                  >
+                     <Popup closeButton={false} minWidth={240} maxWidth={240} className="map-popup" >
+                        {orphanage.name}
+                        <Link to={`/orphanages/${orphanage.id}`}>
+                           <FiArrowRight size={20} color="#FFF" />
+                        </Link>
+                     </Popup>
+                  </Marker>
+               )
+            })}
+         </Map>
+
+         <Link to="/orphanages/create" className="create-orphanage">
+               <FiPlus size={32} color="#FFF" />
+         </Link>
+      </div>
    );
 }
 
